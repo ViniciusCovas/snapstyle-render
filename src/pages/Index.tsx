@@ -9,20 +9,32 @@ import FAQ from "@/components/FAQ";
 import Footer from "@/components/Footer";
 
 const Index = () => {
-  const [heroRef, setHeroRef] = useState<{ handleStyleSelected: (style: string) => void } | null>(null);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState("");
+  const [selectedStyle, setSelectedStyle] = useState("");
 
-  const handleHeroRef = (ref: { handleStyleSelected: (style: string) => void } | null) => {
-    if (ref !== heroRef) {
-      setHeroRef(ref);
+  const handlePhotoUploaded = (imageUrl: string) => {
+    setUploadedImageUrl(imageUrl);
+    // Auto-scroll to style gallery
+    document.getElementById('styles')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleStyleSelected = (style: string) => {
+    if (uploadedImageUrl) {
+      setSelectedStyle(style);
     }
   };
 
   return (
     <div className="min-h-screen">
-      <Hero ref={handleHeroRef} />
+      <Hero 
+        onPhotoUploaded={handlePhotoUploaded}
+        uploadedImageUrl={uploadedImageUrl}
+        selectedStyle={selectedStyle}
+        onStyleSelected={handleStyleSelected}
+      />
       <HowItWorks />
       <DemoSlider />
-      <StyleGallery onStyleSelect={heroRef?.handleStyleSelected} />
+      <StyleGallery onStyleSelect={handleStyleSelected} />
       <WhyRemodel />
       <Testimonials />
       <FAQ />

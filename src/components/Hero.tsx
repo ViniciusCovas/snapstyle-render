@@ -1,36 +1,31 @@
-import { useState, useImperativeHandle, forwardRef } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Upload, Camera } from "lucide-react";
 import heroBackground from "@/assets/hero-background.jpg";
 import UploadModal from "./UploadModal";
 import RenderForm from "./RenderForm";
 
-const Hero = forwardRef<{ handleStyleSelected: (style: string) => void }>((_, ref) => {
+interface HeroProps {
+  onPhotoUploaded: (imageUrl: string) => void;
+  uploadedImageUrl: string;
+  selectedStyle: string;
+  onStyleSelected: (style: string) => void;
+}
+
+const Hero = ({ onPhotoUploaded, uploadedImageUrl, selectedStyle, onStyleSelected }: HeroProps) => {
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [renderFormOpen, setRenderFormOpen] = useState(false);
-  const [uploadedImageUrl, setUploadedImageUrl] = useState("");
-  const [selectedStyle, setSelectedStyle] = useState("");
 
   const handleUpload = () => {
     setUploadModalOpen(true);
   };
 
-  const handlePhotoUploaded = (imageUrl: string) => {
-    setUploadedImageUrl(imageUrl);
-    // Auto-scroll to style gallery or show style selection
-    document.getElementById('styles')?.scrollIntoView({ behavior: 'smooth' });
-  };
-
   const handleStyleSelected = (style: string) => {
     if (uploadedImageUrl) {
-      setSelectedStyle(style);
+      onStyleSelected(style);
       setRenderFormOpen(true);
     }
   };
-
-  useImperativeHandle(ref, () => ({
-    handleStyleSelected
-  }));
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -82,7 +77,7 @@ const Hero = forwardRef<{ handleStyleSelected: (style: string) => void }>((_, re
       <UploadModal
         open={uploadModalOpen}
         onOpenChange={setUploadModalOpen}
-        onPhotoUploaded={handlePhotoUploaded}
+        onPhotoUploaded={onPhotoUploaded}
       />
 
       <RenderForm
@@ -93,8 +88,6 @@ const Hero = forwardRef<{ handleStyleSelected: (style: string) => void }>((_, re
       />
     </section>
   );
-});
-
-Hero.displayName = "Hero";
+};
 
 export default Hero;
