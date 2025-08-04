@@ -172,8 +172,8 @@ async function sendEmailNotification(email: string, renderUrl: string): Promise<
 
     console.log('Email notification sent successfully to:', email);
   } catch (error) {
-    console.error('Failed to send email notification (non-fatal):', error);
-    // Don't throw - email failure shouldn't crash the entire function
+    console.error('Failed to send email notification:', error);
+    throw error; // Re-throw so caller can handle appropriately
   }
 }
 
@@ -236,14 +236,19 @@ serve(async (req) => {
         mockResponse: true
       };
 
-      // Send email notification (non-blocking)
-      sendEmailNotification(email, mockRenderUrl).catch(err => 
-        console.error('Email notification failed:', err)
-      );
+      // Send email notification and track success
+      let emailSent = false;
+      try {
+        await sendEmailNotification(email, mockRenderUrl);
+        emailSent = true;
+      } catch (err) {
+        console.error('Email notification failed:', err);
+      }
 
       return new Response(JSON.stringify({ 
         renderUrl: mockRenderUrl,
-        metadata 
+        metadata,
+        emailSent
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -312,14 +317,19 @@ serve(async (req) => {
         originalError: error.message
       };
 
-      // Send email notification (non-blocking)
-      sendEmailNotification(email, mockRenderUrl).catch(err => 
-        console.error('Email notification failed:', err)
-      );
+      // Send email notification and track success
+      let emailSent = false;
+      try {
+        await sendEmailNotification(email, mockRenderUrl);
+        emailSent = true;
+      } catch (err) {
+        console.error('Email notification failed:', err);
+      }
 
       return new Response(JSON.stringify({ 
         renderUrl: mockRenderUrl,
-        metadata 
+        metadata,
+        emailSent 
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -345,14 +355,19 @@ serve(async (req) => {
         apiError: `${stabilityResponse.status}: ${errorData}`
       };
 
-      // Send email notification (non-blocking)
-      sendEmailNotification(email, mockRenderUrl).catch(err => 
-        console.error('Email notification failed:', err)
-      );
+      // Send email notification and track success
+      let emailSent = false;
+      try {
+        await sendEmailNotification(email, mockRenderUrl);
+        emailSent = true;
+      } catch (err) {
+        console.error('Email notification failed:', err);
+      }
 
       return new Response(JSON.stringify({ 
         renderUrl: mockRenderUrl,
-        metadata 
+        metadata,
+        emailSent 
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -379,14 +394,19 @@ serve(async (req) => {
 
     console.log('Render completed successfully:', { uuid, style });
 
-    // Send email notification asynchronously (non-blocking)
-    sendEmailNotification(email, renderUrl).catch(err => 
-      console.error('Email notification failed:', err)
-    );
+    // Send email notification and track success
+    let emailSent = false;
+    try {
+      await sendEmailNotification(email, renderUrl);
+      emailSent = true;
+    } catch (err) {
+      console.error('Email notification failed:', err);
+    }
 
     return new Response(JSON.stringify({ 
       renderUrl,
-      metadata 
+      metadata,
+      emailSent 
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
