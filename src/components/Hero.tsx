@@ -1,12 +1,36 @@
+import { useState, useImperativeHandle, forwardRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Upload, Camera } from "lucide-react";
 import heroBackground from "@/assets/hero-background.jpg";
+import UploadModal from "./UploadModal";
+import RenderForm from "./RenderForm";
 
-const Hero = () => {
+const Hero = forwardRef<{ handleStyleSelected: (style: string) => void }>((_, ref) => {
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [renderFormOpen, setRenderFormOpen] = useState(false);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState("");
+  const [selectedStyle, setSelectedStyle] = useState("");
+
   const handleUpload = () => {
-    // TODO: Implement upload functionality
-    console.log("Upload photo clicked");
+    setUploadModalOpen(true);
   };
+
+  const handlePhotoUploaded = (imageUrl: string) => {
+    setUploadedImageUrl(imageUrl);
+    // Auto-scroll to style gallery or show style selection
+    document.getElementById('styles')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleStyleSelected = (style: string) => {
+    if (uploadedImageUrl) {
+      setSelectedStyle(style);
+      setRenderFormOpen(true);
+    }
+  };
+
+  useImperativeHandle(ref, () => ({
+    handleStyleSelected
+  }));
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -51,11 +75,26 @@ const Hero = () => {
         </div>
         
         <div className="mt-8 text-sm text-white/70 font-inter">
-          No signup required • Free instant preview • Full design via WhatsApp
+          No signup required • Free instant preview • Full design via email
         </div>
       </div>
+
+      <UploadModal
+        open={uploadModalOpen}
+        onOpenChange={setUploadModalOpen}
+        onPhotoUploaded={handlePhotoUploaded}
+      />
+
+      <RenderForm
+        open={renderFormOpen}
+        onOpenChange={setRenderFormOpen}
+        imageUrl={uploadedImageUrl}
+        selectedStyle={selectedStyle}
+      />
     </section>
   );
-};
+});
+
+Hero.displayName = "Hero";
 
 export default Hero;

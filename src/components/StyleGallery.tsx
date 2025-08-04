@@ -51,7 +51,11 @@ const styles = [
   }
 ];
 
-const StyleGallery = () => {
+interface StyleGalleryProps {
+  onStyleSelect?: (style: string) => void;
+}
+
+const StyleGallery = ({ onStyleSelect }: StyleGalleryProps = {}) => {
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
 
   return (
@@ -80,7 +84,12 @@ const StyleGallery = () => {
                   ? "var(--gradient-primary)" 
                   : `linear-gradient(135deg, ${style.color.split(' ').slice(1).join(' ')})`
               }}
-              onClick={() => setSelectedStyle(selectedStyle === style.name ? null : style.name)}
+              onClick={() => {
+                setSelectedStyle(selectedStyle === style.name ? null : style.name);
+                if (onStyleSelect && selectedStyle !== style.name) {
+                  onStyleSelect(style.name);
+                }
+              }}
             >
               <div className="text-center">
                 <h3 className={`text-lg font-poppins font-bold mb-2 ${
