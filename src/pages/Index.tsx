@@ -11,9 +11,15 @@ import Footer from "@/components/Footer";
 const Index = () => {
   const [heroRef, setHeroRef] = useState<{ handleStyleSelected: (style: string) => void } | null>(null);
 
+  const handleHeroRef = (ref: { handleStyleSelected: (style: string) => void } | null) => {
+    if (ref !== heroRef) {
+      setHeroRef(ref);
+    }
+  };
+
   return (
     <div className="min-h-screen">
-      <Hero ref={setHeroRef} />
+      <Hero ref={handleHeroRef} />
       <HowItWorks />
       <DemoSlider />
       <StyleGallery onStyleSelect={heroRef?.handleStyleSelected} />
