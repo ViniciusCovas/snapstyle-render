@@ -9,8 +9,7 @@ const corsHeaders = {
 interface RenderRequest {
   imageUrl: string;
   style: string;
-  email?: string;
-  phone?: string;
+  email: string;
 }
 
 // Style to prompt mapping
@@ -51,66 +50,81 @@ function generateUUID(): string {
   });
 }
 
-// Send email notification
+// Send email notification using SendGrid
 async function sendEmailNotification(email: string, renderUrl: string): Promise<void> {
-  const sendgridApiKey = Deno.env.get('SENDGRID_API_KEY');
-  if (!sendgridApiKey || !email) return;
+  const apiKey = Deno.env.get('SENDGRID_API_KEY');
+  
+  if (!apiKey) {
+    console.error('Missing SendGrid API key');
+    return;
+  }
 
   try {
-    await fetch('https://api.sendgrid.com/v3/mail/send', {
+    const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${sendgridApiKey}`,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         personalizations: [{
           to: [{ email }],
-          subject: 'Your Interior Design Render is Ready!'
+          subject: '🎨 Your Interior Design Render is Ready! - InteriorSnap',
         }],
-        from: { email: 'noreply@interiorai.com', name: 'Interior AI' },
+        from: { email: 'noreply@interiorsnap.com', name: 'InteriorSnap' },
         content: [{
           type: 'text/html',
           value: `
-            <h2>Your render is complete!</h2>
-            <p>Your interior design render has been generated successfully.</p>
-            <p><a href="${renderUrl}">View your render</a></p>
-          `
-        }]
-      })
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <title>Your Render is Ready</title>
+            </head>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: #2563eb; margin-bottom: 10px;">🎨 Your Render is Complete!</h1>
+                <p style="font-size: 18px; color: #666;">Transform your space with AI-powered interior design</p>
+              </div>
+              
+              <div style="background: #f8f9fa; padding: 25px; border-radius: 10px; margin-bottom: 25px;">
+                <p style="font-size: 16px; margin-bottom: 20px;">Great news! We've successfully processed your interior design render using advanced AI technology.</p>
+                
+                <div style="text-align: center; margin: 25px 0;">
+                  <a href="${renderUrl}" 
+                     style="display: inline-block; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);">
+                    🔍 View Your Render
+                  </a>
+                </div>
+                
+                <p style="font-size: 14px; color: #666; text-align: center; margin-top: 20px;">
+                  Click the button above to see your transformed space!
+                </p>
+              </div>
+              
+              <div style="border-top: 2px solid #e5e7eb; padding-top: 20px; text-align: center; color: #666; font-size: 14px;">
+                <p>Thank you for choosing <strong>InteriorSnap</strong></p>
+                <p style="margin: 5px 0;">Transform any space with the power of AI</p>
+              </div>
+            </body>
+            </html>
+          `,
+        }],
+      }),
     });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`SendGrid API error: ${response.status} - ${errorText}`);
+    }
+
+    console.log('Email notification sent successfully to:', email);
   } catch (error) {
-    console.error('Failed to send email:', error);
+    console.error('Failed to send email notification:', error);
+    throw error; // Re-throw to be handled by the calling function
   }
 }
 
-// Send WhatsApp notification
-async function sendWhatsAppNotification(phone: string, renderUrl: string): Promise<void> {
-  const accountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
-  const authToken = Deno.env.get('TWILIO_AUTH_TOKEN');
-  const whatsappNumber = Deno.env.get('TWILIO_WHATSAPP_NUMBER');
-  
-  if (!accountSid || !authToken || !whatsappNumber || !phone) return;
-
-  try {
-    const credentials = btoa(`${accountSid}:${authToken}`);
-    
-    await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${credentials}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        From: `whatsapp:${whatsappNumber}`,
-        To: `whatsapp:${phone}`,
-        Body: `Your interior design render is ready! View it here: ${renderUrl}`
-      })
-    });
-  } catch (error) {
-    console.error('Failed to send WhatsApp message:', error);
-  }
-}
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -127,7 +141,15 @@ serve(async (req) => {
 
   try {
     // Parse request body
-    const { imageUrl, style, email, phone }: RenderRequest = await req.json();
+    const { imageUrl, style, email }: RenderRequest = await req.json();
+    
+    // Validate email
+    if (!email || !email.includes('@')) {
+      return new Response(
+        JSON.stringify({ error: 'Valid email address is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     
     if (!imageUrl || !style) {
       return new Response(JSON.stringify({ error: 'Missing imageUrl or style' }), {
@@ -239,11 +261,8 @@ serve(async (req) => {
 
     console.log('Render completed successfully:', { uuid, style, renderUrl });
 
-    // Send notifications in background
-    EdgeRuntime.waitUntil(Promise.all([
-      sendEmailNotification(email || '', renderUrl),
-      sendWhatsAppNotification(phone || '', renderUrl)
-    ]));
+    // Send email notification asynchronously
+    EdgeRuntime.waitUntil(sendEmailNotification(email, renderUrl));
 
     return new Response(JSON.stringify({ 
       renderUrl,
