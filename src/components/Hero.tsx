@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Upload, Camera } from "lucide-react";
 import heroBackground from "@/assets/hero-background.jpg";
@@ -13,11 +14,12 @@ interface HeroProps {
 }
 
 const Hero = ({ onPhotoUploaded, uploadedImageUrl, selectedStyle, onStyleSelected }: HeroProps) => {
+  const navigate = useNavigate();
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [renderFormOpen, setRenderFormOpen] = useState(false);
 
   const handleUpload = () => {
-    setUploadModalOpen(true);
+    navigate('/upload');
   };
 
   const handleStyleSelected = (style: string) => {
