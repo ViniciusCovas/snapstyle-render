@@ -221,11 +221,19 @@ serve(async (req) => {
     // Check if Stability AI is available
     const stabilityApiKey = Deno.env.get('STABILITY_AI_API_KEY');
     if (!stabilityApiKey) {
-      console.warn('Stability AI API key not configured, using mock response');
+      console.warn('Stability AI API key not configured, using demo response');
       
-      // Return a mock successful response for testing
+      // Use appropriate demo image based on style instead of random image
+      const demoImages = {
+        modern: 'https://cksgusvgccxrzpxbcdzj.supabase.co/storage/v1/object/public/room-photos/demo-after-1.jpg',
+        rustic: 'https://cksgusvgccxrzpxbcdzj.supabase.co/storage/v1/object/public/room-photos/demo-after-2.jpg',
+        industrial: 'https://cksgusvgccxrzpxbcdzj.supabase.co/storage/v1/object/public/room-photos/demo-after-1.jpg',
+        scandinavian: 'https://cksgusvgccxrzpxbcdzj.supabase.co/storage/v1/object/public/room-photos/demo-after-2.jpg',
+        luxury: 'https://cksgusvgccxrzpxbcdzj.supabase.co/storage/v1/object/public/room-photos/demo-after-1.jpg'
+      };
+      
       const uuid = generateUUID();
-      const mockRenderUrl = `https://picsum.photos/800/600?random=${uuid}`;
+      const mockRenderUrl = demoImages[style as keyof typeof demoImages] || demoImages.modern;
       
       const metadata = {
         uuid,
@@ -233,7 +241,8 @@ serve(async (req) => {
         prompt,
         createdAt: new Date().toISOString(),
         originalImageUrl: imageUrl,
-        mockResponse: true
+        demoResponse: true,
+        note: 'This is a demo result. AI service is currently unavailable.'
       };
 
       // Send email notification and track success
@@ -302,10 +311,18 @@ serve(async (req) => {
         });
       }
       
-      // Return mock response on API failure
-      console.log('Stability AI failed, using mock response');
+      // Return demo response on API failure
+      console.log('Stability AI failed, using demo response');
+      const demoImages = {
+        modern: 'https://cksgusvgccxrzpxbcdzj.supabase.co/storage/v1/object/public/room-photos/demo-after-1.jpg',
+        rustic: 'https://cksgusvgccxrzpxbcdzj.supabase.co/storage/v1/object/public/room-photos/demo-after-2.jpg',
+        industrial: 'https://cksgusvgccxrzpxbcdzj.supabase.co/storage/v1/object/public/room-photos/demo-after-1.jpg',
+        scandinavian: 'https://cksgusvgccxrzpxbcdzj.supabase.co/storage/v1/object/public/room-photos/demo-after-2.jpg',
+        luxury: 'https://cksgusvgccxrzpxbcdzj.supabase.co/storage/v1/object/public/room-photos/demo-after-1.jpg'
+      };
+      
       const uuid = generateUUID();
-      const mockRenderUrl = `https://picsum.photos/800/600?random=${uuid}`;
+      const mockRenderUrl = demoImages[style as keyof typeof demoImages] || demoImages.modern;
       
       const metadata = {
         uuid,
@@ -313,8 +330,9 @@ serve(async (req) => {
         prompt,
         createdAt: new Date().toISOString(),
         originalImageUrl: imageUrl,
-        fallbackResponse: true,
-        originalError: error.message
+        demoResponse: true,
+        originalError: error.message,
+        note: 'This is a demo result. AI service failed due to insufficient credits.'
       };
 
       // Send email notification and track success
@@ -340,10 +358,18 @@ serve(async (req) => {
       const errorData = await stabilityResponse.text();
       console.error('Stability AI error:', stabilityResponse.status, errorData);
       
-      // Return mock response on API error
-      console.log('Stability AI returned error, using mock response');
+      // Return demo response on API error  
+      console.log('Stability AI returned error, using demo response');
+      const demoImages = {
+        modern: 'https://cksgusvgccxrzpxbcdzj.supabase.co/storage/v1/object/public/room-photos/demo-after-1.jpg',
+        rustic: 'https://cksgusvgccxrzpxbcdzj.supabase.co/storage/v1/object/public/room-photos/demo-after-2.jpg',
+        industrial: 'https://cksgusvgccxrzpxbcdzj.supabase.co/storage/v1/object/public/room-photos/demo-after-1.jpg',
+        scandinavian: 'https://cksgusvgccxrzpxbcdzj.supabase.co/storage/v1/object/public/room-photos/demo-after-2.jpg',
+        luxury: 'https://cksgusvgccxrzpxbcdzj.supabase.co/storage/v1/object/public/room-photos/demo-after-1.jpg'
+      };
+      
       const uuid = generateUUID();
-      const mockRenderUrl = `https://picsum.photos/800/600?random=${uuid}`;
+      const mockRenderUrl = demoImages[style as keyof typeof demoImages] || demoImages.modern;
       
       const metadata = {
         uuid,
@@ -351,8 +377,9 @@ serve(async (req) => {
         prompt,
         createdAt: new Date().toISOString(),
         originalImageUrl: imageUrl,
-        fallbackResponse: true,
-        apiError: `${stabilityResponse.status}: ${errorData}`
+        demoResponse: true,
+        apiError: `${stabilityResponse.status}: ${errorData}`,
+        note: 'This is a demo result. AI service returned an error.'
       };
 
       // Send email notification and track success

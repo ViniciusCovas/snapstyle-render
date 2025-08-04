@@ -18,6 +18,7 @@ const RenderForm = ({ open, onOpenChange, imageUrl, selectedStyle }: RenderFormP
   const [email, setEmail] = useState("");
   const [rendering, setRendering] = useState(false);
   const [renderResult, setRenderResult] = useState<string | null>(null);
+  const [renderData, setRenderData] = useState<any>(null);
   const [emailSent, setEmailSent] = useState(false);
   const { toast } = useToast();
 
@@ -51,6 +52,7 @@ const RenderForm = ({ open, onOpenChange, imageUrl, selectedStyle }: RenderFormP
       // Show the result directly
       if (data?.renderUrl) {
         setRenderResult(data.renderUrl);
+        setRenderData(data);
         setEmailSent(!!data.emailSent);
         
         toast({
@@ -85,6 +87,7 @@ const RenderForm = ({ open, onOpenChange, imageUrl, selectedStyle }: RenderFormP
 
   const handleClose = () => {
     setRenderResult(null);
+    setRenderData(null);
     setEmailSent(false);
     setEmail("");
     onOpenChange(false);
@@ -130,6 +133,15 @@ const RenderForm = ({ open, onOpenChange, imageUrl, selectedStyle }: RenderFormP
                   }
                 </p>
               </div>
+              
+              {renderData?.metadata?.demoResponse && (
+                <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <span className="text-amber-600">ℹ️</span>
+                  <p className="text-sm text-amber-700">
+                    This is a demo result. AI service is currently unavailable due to credit limits.
+                  </p>
+                </div>
+              )}
               
               <Button variant="outline" onClick={handleClose} className="w-full">
                 Close
