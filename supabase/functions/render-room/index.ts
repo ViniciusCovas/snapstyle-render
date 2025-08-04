@@ -178,25 +178,26 @@ serve(async (req) => {
     
     const callStabilityAPI = async (): Promise<Response> => {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
 
       try {
-        const response = await fetch('https://api.stability.ai/v2beta/stable-image/generate/sdxl', {
+        const formData = new FormData();
+        formData.append('prompt', prompt);
+        formData.append('output_format', 'jpeg');
+        formData.append('mode', 'image-to-image');
+        formData.append('strength', '0.6');
+        
+        // Convert base64 to blob for the image
+        const imageBlob = new Blob([Uint8Array.from(atob(mlsdMap), c => c.charCodeAt(0))], { type: 'image/jpeg' });
+        formData.append('image', imageBlob);
+
+        const response = await fetch('https://api.stability.ai/v2beta/stable-image/generate/ultra', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${stabilityApiKey}`,
-            'Content-Type': 'application/json',
+            'Accept': 'image/*',
           },
-          body: JSON.stringify({
-            prompt,
-            control_type: 'mlsd',
-            control_image: mlsdMap,
-            control_strength: 0.65,
-            steps: 25,
-            cfg_scale: 5,
-            width: 1024,
-            height: 768
-          }),
+          body: formData,
           signal: controller.signal
         });
         
@@ -230,31 +231,28 @@ serve(async (req) => {
     // Handle Stability AI response
     if (!stabilityResponse.ok) {
       const errorData = await stabilityResponse.text();
-      return new Response(JSON.stringify({ error: errorData }), {
+      console.error('Stability AI error:', errorData);
+      return new Response(JSON.stringify({ error: 'Image generation failed', details: errorData }), {
         status: 503,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    const result = await stabilityResponse.json();
-    const imageBase64 = result.artifacts[0].base64;
+    // Get the image as array buffer
+    const imageBuffer = await stabilityResponse.arrayBuffer();
+    const imageBase64 = btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
     
     // Generate UUID for file naming
     const uuid = generateUUID();
     
-    // Convert base64 to buffer
-    const imageBuffer = Uint8Array.from(atob(imageBase64), c => c.charCodeAt(0));
-    
-    // In a real implementation, you would save to a storage service
-    // For now, we'll simulate the file URLs
-    const renderUrl = `https://your-domain.com/renders/${uuid}.jpg`;
+    // For demo purposes, create a mock render URL (in production, save to storage)
+    const renderUrl = `data:image/jpeg;base64,${imageBase64}`;
     
     // Save metadata
     const metadata = {
       uuid,
       style,
       prompt,
-      seed: result.artifacts[0].seed || null,
       createdAt: new Date().toISOString(),
       originalImageUrl: imageUrl
     };

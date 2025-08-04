@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -67,6 +67,9 @@ const RenderForm = ({ open, onOpenChange, imageUrl, selectedStyle }: RenderFormP
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Get Your {selectedStyle} Redesign</DialogTitle>
+          <DialogDescription>
+            Enter your email to receive your AI-generated room redesign
+          </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
